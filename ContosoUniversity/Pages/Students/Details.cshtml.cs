@@ -24,19 +24,16 @@ namespace ContosoUniversity.Pages_Students
         public async Task<IActionResult> OnGetAsync(int? id)
         {
             if (id == null)
-            {
                 return NotFound();
-            }
 
-            var student = await _context.Students.FirstOrDefaultAsync(m => m.ID == id);
+            Student = await _context.Students
+                .Include(s => s.Enrollments)
+                .ThenInclude(e => e.Course)
+                .AsNoTracking()
+                .FirstOrDefaultAsync(m => m.ID == id);
 
-            if (student is not null)
-            {
-                Student = student;
-
+            if (Student is not null)
                 return Page();
-            }
-
             return NotFound();
         }
     }
