@@ -13,17 +13,58 @@ namespace ContosoUniversity.Pages_Students
     public class IndexModel : PageModel
     {
         private readonly ContosoUniversity.Data.SchoolContext _context;
+        private readonly IConfiguration _configuration;
 
-        public IndexModel(ContosoUniversity.Data.SchoolContext context)
+        public IndexModel(ContosoUniversity.Data.SchoolContext context, IConfiguration configuration)
         {
             _context = context;
+            _configuration = configuration;
         }
 
-        public IList<Student> Student { get;set; } = default!;
+        public string NameSort { get; set; }
+        public string DateSort { get; set; }
+        public string CurrentFilter { get; set; }
+        public string CurrentSort { get; set; }
 
-        public async Task OnGetAsync()
+        public PaginatedList<Student> Students { get; set; }
+
+        public async Task OnGetAsync(string sortOrder, string currentFilter, string searchString, int? pageIndex)
         {
-            Student = await _context.Students.ToListAsync();
+            CurrentSort = sortOrder;
+            NameSort = string.IsNullOrEmpty(sortOrder) ? "name_desc" : "";
+            DateSort = sortOrder == "Date" ? "date_desc" : "Date";
+
+            if (searchString != null)
+                pageIndex = 1;
+            else
+                searchString = currentFilter;
+
+            CurrentFilter = searchString;
+
+            IQueryable<Student> studentsIQ = from s in _context.Students
+                                             select s;
+
+            if (!string.IsNullOrEmpty(searchString))
+                studentsIQ = studentsIQ.Where(s => s.LastName.ToUpper().Contains(searchString.ToUpper()) || s.FirstMidName.ToUpper().Contains(searchString.ToUpper()));
+
+            switch (sortOrder)
+            {
+                case "name_desc":
+                    studentsIQ = studentsIQ.OrderByDescending(s => s.LastName);
+                    break;
+                case "Date":
+                    studentsIQ = studentsIQ.OrderBy(s => s.EnrollmentDate);
+                    break;
+                case "date_desc":
+                    studentsIQ = studentsIQ.OrderByDescending(s => s.EnrollmentDate);
+                    break;
+                default:
+                    studentsIQ = studentsIQ.OrderBy(s => s.LastName);
+                    break;
+            }
+
+            var pageSize = _configuration.GetValue("PageSize", 4);
+            Students = await PaginatedList<Student>.CreateAsync(studentsIQ.AsNoTracking(), pageIndex ?? 1, pageSize);
         }
     }
 }
