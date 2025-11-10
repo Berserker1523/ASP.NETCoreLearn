@@ -2,10 +2,6 @@ using ContosoUniversity.Models.SchoolViewModels;
 using ContosoUniversity.Data;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using ContosoUniversity.Models;
 
 namespace ContosoUniversity.Pages
 {
