@@ -25,6 +25,9 @@ namespace ContosoUniversity.Data
 
             modelBuilder.Entity<Student>().ToTable(nameof(Student));
             modelBuilder.Entity<Instructor>().ToTable(nameof(Instructor));
+            modelBuilder.Entity<Department>()
+                .Property(d => d.ConcurrencyToken)
+                .IsConcurrencyToken();
         }
     }
 }
