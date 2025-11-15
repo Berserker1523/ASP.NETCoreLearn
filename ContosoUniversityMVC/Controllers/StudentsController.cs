@@ -1,4 +1,5 @@
-﻿using ContosoUniversity.Data;
+﻿using ContosoUniversity;
+using ContosoUniversity.Data;
 using ContosoUniversity.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -15,9 +16,43 @@ namespace ContosoUniversityMVC.Controllers
         }
 
         // GET: Students
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(string sortOrder, string currentFilter, string searchString, int? pageNumber)
         {
-            return View(await _context.Students.ToListAsync());
+            ViewData["CurrentSort"] = sortOrder;
+            ViewData["NameSortParm"] = string.IsNullOrEmpty(sortOrder) || sortOrder == "name_asc" ? "name_desc" : "name_asc";
+            ViewData["DateSortParm"] = string.IsNullOrEmpty(sortOrder) || sortOrder == "date_asc" ? "date_desc" : "date_asc";
+
+            if (searchString != null)
+                pageNumber = 1;
+            else
+                searchString = currentFilter;
+
+            ViewData["CurrentFilter"] = searchString;
+
+            IQueryable<Student> students = from s in _context.Students select s;
+
+            if (!string.IsNullOrEmpty(searchString))
+                students = students.Where(s => s.LastName.Contains(searchString) || s.FirstMidName.Contains(searchString));
+
+            switch (sortOrder)
+            {
+                case "date_asc":
+                    students = students.OrderBy(s => s.EnrollmentDate);
+                    break;
+                case "date_desc":
+                    students = students.OrderByDescending(s => s.EnrollmentDate);
+                    break;
+                case "name_desc":
+                    students = students.OrderByDescending(s => s.LastName);
+                    break;
+                case "name_asc":
+                default:
+                    students = students.OrderBy(s => s.LastName);
+                    break;
+            }
+
+            int pageSize = 3;
+            return View(await PaginatedList<Student>.CreateAsync(students.AsNoTracking(), pageNumber ?? 1, pageSize));
         }
 
         // GET: Students/Details/5
