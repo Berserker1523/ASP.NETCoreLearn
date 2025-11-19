@@ -156,5 +156,18 @@ namespace ContosoUniversityMVC.Controllers
             await _context.SaveChangesAsync();
             return RedirectToAction(nameof(Index));
         }
+
+        public IActionResult UpdateCourseCredits()
+        {
+            return View();
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> UpdateCourseCredits(int? multiplier)
+        {
+            if (multiplier != null)
+                ViewData["RowsAffected"] = await _context.Database.ExecuteSqlAsync($"UPDATE Course SET Credits = Credits * {multiplier}");
+            return View();
+        }
     }
 }

@@ -29,6 +29,7 @@ public class DepartmentsController : Controller
             return NotFound();
 
         var department = await _context.Departments
+            .FromSql($"SELECT * FROM Department WHERE DepartmentID = {id}")
             .Include(d => d.Administrator)
             .AsNoTracking()
             .FirstOrDefaultAsync(m => m.DepartmentID == id);

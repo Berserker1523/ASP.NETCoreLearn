@@ -19,8 +19,8 @@ namespace ContosoUniversityMVC.Controllers
         public async Task<IActionResult> Index(string sortOrder, string currentFilter, string searchString, int? pageNumber)
         {
             ViewData["CurrentSort"] = sortOrder;
-            ViewData["NameSortParm"] = string.IsNullOrEmpty(sortOrder) || sortOrder == "name_asc" ? "name_desc" : "name_asc";
-            ViewData["DateSortParm"] = string.IsNullOrEmpty(sortOrder) || sortOrder == "date_asc" ? "date_desc" : "date_asc";
+            ViewData["NameSortParm"] = string.IsNullOrEmpty(sortOrder) || sortOrder == "LastName_asc" ? "LastName_desc" : "LastName_asc";
+            ViewData["DateSortParm"] = string.IsNullOrEmpty(sortOrder) || sortOrder == "EnrollmentDate_asc" ? "EnrollmentDate_desc" : "EnrollmentDate_asc";
 
             if (searchString != null)
                 pageNumber = 1;
@@ -34,7 +34,18 @@ namespace ContosoUniversityMVC.Controllers
             if (!string.IsNullOrEmpty(searchString))
                 students = students.Where(s => s.LastName.Contains(searchString) || s.FirstMidName.Contains(searchString));
 
-            switch (sortOrder)
+            if (string.IsNullOrEmpty(sortOrder))
+                sortOrder = "LastName_desc";
+
+            bool descending = sortOrder.EndsWith("_desc");
+            sortOrder = sortOrder.Split("_")[0];
+
+            if (descending)
+                students = students.OrderByDescending(e => EF.Property<object>(e, sortOrder));
+            else
+                students = students.OrderBy(e => EF.Property<object>(e, sortOrder));
+
+            /*switch (sortOrder)
             {
                 case "date_asc":
                     students = students.OrderBy(s => s.EnrollmentDate);
@@ -49,7 +60,7 @@ namespace ContosoUniversityMVC.Controllers
                 default:
                     students = students.OrderBy(s => s.LastName);
                     break;
-            }
+            }*/
 
             int pageSize = 3;
             return View(await PaginatedList<Student>.CreateAsync(students.AsNoTracking(), pageNumber ?? 1, pageSize));
